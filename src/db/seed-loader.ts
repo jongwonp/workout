@@ -1,7 +1,7 @@
 import { db } from './schema';
 import { seedData } from './seeds';
 import { nowIso } from '../utils/date';
-import type { User } from '../types';
+import type { Exercise, User } from '../types';
 
 const DEFAULT_BODY_WEIGHT_KG = 70; // Slice 2에서 설정 화면 도입 시 사용자 입력으로 대체
 
@@ -36,9 +36,16 @@ export async function ensureSeeded(): Promise<void> {
         // 정상 첫 실행이면 모든 clear가 no-op.
         await Promise.all(tables.map((t) => t.clear()));
 
+        // seed Exercise는 v4.6 신규 필드가 없으므로 삽입 시 기본값을 채운다 (seeds.ts 불변).
+        const exercises: Exercise[] = seedData.exercises.map((e) => ({
+          ...e,
+          muscle_mapping_confidence: 'verified' as const,
+          is_archived: false,
+        }));
+
         await db.bodyRegions.bulkAdd(seedData.bodyRegions);
         await db.muscles.bulkAdd(seedData.muscles);
-        await db.exercises.bulkAdd(seedData.exercises);
+        await db.exercises.bulkAdd(exercises);
         await db.exerciseVariations.bulkAdd(seedData.exerciseVariations);
         await db.exerciseMuscleMappings.bulkAdd(seedData.exerciseMuscleMappings);
       });
@@ -48,6 +55,32 @@ export async function ensureSeeded(): Promise<void> {
     }
   })();
   return seedingPromise;
+}
+
+/**
+ * v4.6 마이그레이션: 기존(Slice 2) Exercise에 muscle_mapping_confidence / is_archived가 없으면 채운다.
+ * idempotent — 모든 종목에 필드가 있으면 no-op. ensureSeeded() 이후 호출.
+ */
+export async function ensureExerciseDefaults(): Promise<void> {
+  const exercises = await db.exercises.toArray();
+  const toUpdate = exercises.filter(
+    (e) =>
+      (e as Partial<Exercise>).muscle_mapping_confidence === undefined ||
+      (e as Partial<Exercise>).is_archived === undefined
+  );
+  if (toUpdate.length === 0) return;
+
+  await db.transaction('rw', db.exercises, async () => {
+    for (const ex of toUpdate) {
+      const e = ex as Partial<Exercise>;
+      await db.exercises.update(ex.id, {
+        muscle_mapping_confidence:
+          e.muscle_mapping_confidence ??
+          (ex.is_custom ? 'user_estimated' : 'verified'),
+        is_archived: e.is_archived ?? false,
+      });
+    }
+  });
 }
 
 export async function ensureUser(): Promise<User> {

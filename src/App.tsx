@@ -7,7 +7,8 @@ import {
   Routes,
 } from 'react-router-dom';
 import BottomNav from './components/BottomNav';
-import { ensureSeeded, ensureUser } from './db/seed-loader';
+import { ensureExerciseDefaults, ensureSeeded, ensureUser } from './db/seed-loader';
+import ExerciseEditPage from './pages/ExerciseEditPage';
 import ExerciseListPage from './pages/ExerciseListPage';
 import HistoryDetailPage from './pages/HistoryDetailPage';
 import HistoryPage from './pages/HistoryPage';
@@ -42,6 +43,7 @@ function App() {
     (async () => {
       try {
         await ensureSeeded();
+        await ensureExerciseDefaults();
         await ensureUser();
         await Promise.all([initializeSession(), initializeUser()]);
         // F1.14: 영구 저장 권한 요청 (1회). 결과는 storeStore에 기록 — 실패해도 앱 진입은 막지 않음.
@@ -80,6 +82,8 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Navigate to="/exercises" replace />} />
           <Route path="/exercises" element={<ExerciseListPage />} />
+          <Route path="/exercises/new" element={<ExerciseEditPage />} />
+          <Route path="/exercises/:id/edit" element={<ExerciseEditPage />} />
           <Route path="/session/new" element={<SessionStartPage />} />
           <Route path="/session/:sessionId" element={<WorkoutSessionPage />} />
           <Route path="/history" element={<HistoryPage />} />

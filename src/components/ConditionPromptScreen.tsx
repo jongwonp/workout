@@ -196,7 +196,7 @@ export default function ConditionPromptScreen({ onSubmit, onSkip }: Props) {
             type="button"
             onClick={handleSubmit}
             disabled={submitting || !hasAny}
-            className="h-11 flex-1 rounded-lg bg-black text-sm font-medium text-white disabled:opacity-40"
+            className="h-11 flex-1 rounded-lg bg-emerald-600 text-sm font-medium text-white active:bg-emerald-700 disabled:opacity-40"
           >
             {submitting ? '저장 중...' : '저장하고 시작'}
           </button>

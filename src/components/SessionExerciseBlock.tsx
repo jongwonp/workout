@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
-import LastSessionInfo from './LastSessionInfo';
-import SetInput from './SetInput';
+import { useCallback, useEffect, useState } from "react";
+import LastSessionInfo from "./LastSessionInfo";
+import SetInput from "./SetInput";
 import {
   createSet,
   deleteSet,
   getSetsForSessionExercise,
   updateSet,
   type SetMutablePatch,
-} from '../db/repositories/sets';
-import type { Exercise, SessionExercise, WorkoutSet } from '../types';
+} from "../db/repositories/sets";
+import type { Exercise, SessionExercise, WorkoutSet } from "../types";
 
 interface Props {
   sessionExercise: SessionExercise;
@@ -39,15 +39,41 @@ export default function SessionExerciseBlock({
     };
   }, [sessionExercise.id]);
 
-  const isBodyweight = exercise.default_equipment === 'bodyweight';
+  const isBodyweight = exercise.default_equipment === "bodyweight";
 
   const handleAddSet = async () => {
     if (adding) return;
     setAdding(true);
     try {
       const newSet = await createSet(sessionExercise.id, {
-        loadType: isBodyweight ? 'bodyweight' : 'external',
+        loadType: isBodyweight ? "bodyweight" : "external",
         bodyWeightKg: isBodyweight ? userBodyWeightKg : undefined,
+      });
+      setSets((prev) => (prev ? [...prev, newSet] : [newSet]));
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  // v4.6: 직전 세트 복사. 새 세트는 직전 세트의 워밍업 여부를 그대로 따른다.
+  //   - 본세트 복사: 무게/횟수/RPE·RIR
+  //   - 워밍업 복사: 무게/횟수만 (강도 미복사)
+  const lastSet = sets && sets.length > 0 ? sets[sets.length - 1] : null;
+
+  const handleCopySet = async () => {
+    if (adding || !lastSet) return;
+    setAdding(true);
+    try {
+      const newSet = await createSet(sessionExercise.id, {
+        loadType: isBodyweight ? "bodyweight" : "external",
+        bodyWeightKg: isBodyweight ? userBodyWeightKg : undefined,
+        initial: {
+          is_warmup: lastSet.is_warmup,
+          weight_kg: lastSet.weight_kg,
+          reps: lastSet.reps,
+          rpe: lastSet.is_warmup ? null : lastSet.rpe,
+          rir: lastSet.is_warmup ? null : lastSet.rir,
+        },
       });
       setSets((prev) => (prev ? [...prev, newSet] : [newSet]));
     } finally {
@@ -59,10 +85,12 @@ export default function SessionExerciseBlock({
     async (setId: string, patch: SetMutablePatch) => {
       await updateSet(setId, patch);
       setSets((prev) =>
-        prev ? prev.map((s) => (s.id === setId ? { ...s, ...patch } : s)) : prev
+        prev
+          ? prev.map((s) => (s.id === setId ? { ...s, ...patch } : s))
+          : prev,
       );
     },
-    []
+    [],
   );
 
   const handleDelete = useCallback(async (setId: string) => {
@@ -104,7 +132,9 @@ export default function SessionExerciseBlock({
         {sets === null ? (
           <p className="text-sm text-gray-400">로딩 중...</p>
         ) : sets.length === 0 ? (
-          <p className="text-sm text-gray-400">세트가 없어요. 아래 버튼으로 추가하세요.</p>
+          <p className="text-sm text-gray-400">
+            세트가 없어요. 아래 버튼으로 추가하세요.
+          </p>
         ) : (
           sets.map((s) => (
             <SetInput
@@ -117,14 +147,25 @@ export default function SessionExerciseBlock({
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={handleAddSet}
-        disabled={adding || sets === null}
-        className="mt-3 h-11 w-full rounded-lg border border-dashed border-gray-300 text-sm font-medium text-gray-700 active:bg-gray-50 disabled:opacity-50"
-      >
-        + 세트 추가
-      </button>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={handleAddSet}
+          disabled={adding || sets === null}
+          className="h-11 flex-1 rounded-lg bg-emerald-600 text-sm font-medium text-white active:bg-emerald-700 disabled:opacity-50"
+        >
+          + 세트 추가
+        </button>
+        <button
+          type="button"
+          onClick={handleCopySet}
+          disabled={adding || sets === null || lastSet === null}
+          aria-label="이전 세트와 동일하게 추가"
+          className="h-11 rounded-lg border border-gray-300 px-3 text-sm font-medium text-gray-700 active:bg-gray-50 disabled:opacity-40"
+        >
+          ⟲ 이전 세트와 동일
+        </button>
+      </div>
     </div>
   );
 }

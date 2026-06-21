@@ -231,7 +231,7 @@ export default function WorkoutSessionPage() {
               type="button"
               onClick={() => navigate('/exercises')}
               disabled={ending}
-              className="h-11 flex-1 rounded-lg border border-gray-300 text-sm font-medium text-black disabled:opacity-50"
+              className="h-11 flex-1 rounded-lg bg-emerald-600 text-sm font-medium text-white active:bg-emerald-700 disabled:opacity-50"
             >
               종목 추가
             </button>
@@ -251,7 +251,7 @@ export default function WorkoutSessionPage() {
                   setEnding(false);
                 }
               }}
-              className="h-11 flex-1 rounded-lg bg-black text-sm font-medium text-white disabled:opacity-40"
+              className="h-11 flex-1 rounded-lg bg-red-600 text-sm font-medium text-white active:bg-red-700 disabled:opacity-40"
             >
               {ending ? '종료 중...' : '세션 종료'}
             </button>
@@ -264,7 +264,7 @@ export default function WorkoutSessionPage() {
           <button
             type="button"
             onClick={() => navigate(`/history/${sessionId}`)}
-            className="h-11 w-full rounded-lg bg-black text-sm font-medium text-white"
+            className="h-11 w-full rounded-lg bg-sky-600 text-sm font-medium text-white active:bg-sky-700"
           >
             수정 완료
           </button>

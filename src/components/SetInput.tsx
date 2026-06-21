@@ -171,6 +171,14 @@ export default function SetInput({ set, onPersist, onDelete }: Props) {
     setWeightStr(String(next));
   };
 
+  const adjustReps = (delta: number) => {
+    const current = repsStr === '' ? 0 : Number(repsStr);
+    if (Number.isNaN(current)) return;
+    const next = Math.max(1, Math.round(current) + delta);
+    markDirty();
+    setRepsStr(String(next));
+  };
+
   const handleIntensityChange = (v: number | null) => {
     markDirty();
     intensityDirtyRef.current = true;
@@ -247,24 +255,42 @@ export default function SetInput({ set, onPersist, onDelete }: Props) {
           )}
         </div>
 
-        {/* 횟수 */}
+        {/* 횟수 (−/+ 스텝 버튼으로 키보드 없이 조절) */}
         <div>
           <label className="block text-xs font-medium text-gray-500">
             횟수
           </label>
-          <input
-            type="number"
-            inputMode="numeric"
-            step="1"
-            min="1"
-            value={repsStr}
-            onChange={(e) => {
-              markDirty();
-              setRepsStr(e.target.value);
-            }}
-            placeholder="0"
-            className="mt-1 h-11 w-full rounded-lg border border-gray-200 px-3 text-base outline-none focus:border-gray-400"
-          />
+          <div className="mt-1 flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => adjustReps(-1)}
+              aria-label="횟수 1 감소"
+              className="h-11 w-10 shrink-0 rounded-lg border border-gray-200 bg-white text-xl font-medium text-gray-700 active:bg-gray-100"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              inputMode="numeric"
+              step="1"
+              min="1"
+              value={repsStr}
+              onChange={(e) => {
+                markDirty();
+                setRepsStr(e.target.value);
+              }}
+              placeholder="0"
+              className="h-11 w-full min-w-0 rounded-lg border border-gray-200 px-2 text-center text-base outline-none focus:border-gray-400"
+            />
+            <button
+              type="button"
+              onClick={() => adjustReps(1)}
+              aria-label="횟수 1 증가"
+              className="h-11 w-10 shrink-0 rounded-lg border border-gray-200 bg-white text-xl font-medium text-gray-700 active:bg-gray-100"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
 

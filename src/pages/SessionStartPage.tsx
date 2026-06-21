@@ -94,7 +94,7 @@ export default function SessionStartPage() {
           type="button"
           onClick={handleStartEmpty}
           disabled={starting}
-          className="h-14 w-full rounded-xl bg-black text-base font-semibold text-white active:bg-gray-800 disabled:opacity-50"
+          className="h-14 w-full rounded-xl bg-emerald-600 text-base font-semibold text-white active:bg-emerald-700 disabled:opacity-50"
         >
           빈 세션 시작
         </button>

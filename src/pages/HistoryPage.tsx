@@ -37,7 +37,7 @@ export default function HistoryPage() {
         </p>
         <Link
           to="/exercises"
-          className="mt-4 inline-flex h-11 items-center rounded-lg bg-black px-4 text-sm font-medium text-white"
+          className="mt-4 inline-flex h-11 items-center rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white active:bg-emerald-700"
         >
           종목 목록으로
         </Link>

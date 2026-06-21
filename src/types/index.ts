@@ -19,10 +19,25 @@ export type {
   MuscleRole,
   BodyRegion,
   Muscle,
-  Exercise,
   ExerciseVariation,
   ExerciseMuscleMapping,
 } from '../db/seeds';
+
+import type { Exercise as SeedExercise } from '../db/seeds';
+
+/**
+ * 앱에서 사용하는 Exercise 타입.
+ *
+ * seeds.ts는 "수정 금지" 원칙이라 seed의 Exercise를 직접 건드리지 않고,
+ * v4.6에서 추가된 필드를 여기서 확장(재정의 아님)한다.
+ * seed 데이터 삽입 시 seed-loader가 기본값을 채운다.
+ */
+export interface Exercise extends SeedExercise {
+  /** v4.6: 보조근 매핑 정확도. 시드='verified', 커스텀='user_estimated' */
+  muscle_mapping_confidence: 'verified' | 'user_estimated';
+  /** v4.6(추가 결정): soft delete. 사용 이력 있는 커스텀 종목 삭제 시 true */
+  is_archived: boolean;
+}
 
 // =========================================
 // 공통 척도 타입

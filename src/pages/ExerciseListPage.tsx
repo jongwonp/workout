@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   getAllExercisesWithPrimaryMuscle,
   type ExerciseListItem,
-} from '../db/repositories/exercises';
-import { useSessionStore } from '../store/sessionStore';
-import type { Equipment } from '../types';
+} from "../db/repositories/exercises";
+import { useSessionStore } from "../store/sessionStore";
+import type { Equipment } from "../types";
 
-type Category = '가슴' | '등' | '어깨' | '하체' | '팔' | '코어';
+type Category = "가슴" | "등" | "어깨" | "하체" | "팔" | "코어";
 
-const CATEGORIES: Category[] = ['가슴', '등', '어깨', '하체', '팔', '코어'];
+const CATEGORIES: Category[] = ["가슴", "등", "어깨", "하체", "팔", "코어"];
 
 /**
  * 카테고리 → 주동근 id 목록. 결정 (a) 반영:
@@ -18,32 +18,32 @@ const CATEGORIES: Category[] = ['가슴', '등', '어깨', '하체', '팔', '코
  *   - 복사근(obliques) → '코어'
  */
 const CATEGORY_TO_MUSCLES: Record<Category, string[]> = {
-  '가슴': ['chest', 'chest_upper', 'chest_lower'],
-  '등': ['lats', 'rhomboids', 'erector_spinae', 'traps_upper', 'traps_mid'],
-  '어깨': ['shoulder_front', 'shoulder_side', 'shoulder_rear'],
-  '하체': ['quads', 'hamstrings', 'glutes', 'calves'],
-  '팔': ['biceps', 'triceps', 'forearms'],
-  '코어': ['abs', 'core', 'obliques'],
+  가슴: ["chest", "chest_upper", "chest_lower"],
+  등: ["lats", "rhomboids", "erector_spinae", "traps_upper", "traps_mid"],
+  어깨: ["shoulder_front", "shoulder_side", "shoulder_rear"],
+  하체: ["quads", "hamstrings", "glutes", "calves"],
+  팔: ["biceps", "triceps", "forearms"],
+  코어: ["abs", "core", "obliques"],
 };
 
 const EQUIPMENT_LABEL: Record<Equipment, string> = {
-  barbell: '바벨',
-  dumbbell: '덤벨',
-  machine: '머신',
-  cable: '케이블',
-  bodyweight: '맨몸',
-  ez_bar: 'EZ바',
+  barbell: "바벨",
+  dumbbell: "덤벨",
+  machine: "머신",
+  cable: "케이블",
+  bodyweight: "맨몸",
+  ez_bar: "EZ바",
 };
 
 export default function ExerciseListPage() {
   const navigate = useNavigate();
   const ensureSessionAndAddExercise = useSessionStore(
-    (s) => s.ensureSessionAndAddExercise
+    (s) => s.ensureSessionAndAddExercise,
   );
   const [items, setItems] = useState<ExerciseListItem[] | null>(null);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<Category>>(
-    new Set()
+    new Set(),
   );
   const [adding, setAdding] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export default function ExerciseListPage() {
       if (activeCats.length > 0) {
         if (!primaryMuscle) return false;
         const matches = activeCats.some((c) =>
-          CATEGORY_TO_MUSCLES[c].includes(primaryMuscle.id)
+          CATEGORY_TO_MUSCLES[c].includes(primaryMuscle.id),
         );
         if (!matches) return false;
       }
@@ -93,7 +93,7 @@ export default function ExerciseListPage() {
       const sessionId = await ensureSessionAndAddExercise(exerciseId);
       navigate(`/session/${sessionId}`);
     } catch (err) {
-      console.error('종목 추가 실패', err);
+      console.error("종목 추가 실패", err);
       setError(err instanceof Error ? err.message : String(err));
       setAdding(null);
     }
@@ -101,6 +101,16 @@ export default function ExerciseListPage() {
 
   return (
     <div className="flex h-full flex-col">
+      <header className="flex items-center justify-between border-b border-gray-100 bg-white px-4 py-3">
+        <h1 className="text-base font-semibold text-black">종목</h1>
+        <button
+          type="button"
+          onClick={() => navigate("/exercises/new")}
+          className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-medium text-white active:bg-emerald-700"
+        >
+          + 새 종목 추가
+        </button>
+      </header>
       <div className="border-b border-gray-100 bg-white p-3">
         <input
           type="search"
@@ -118,11 +128,9 @@ export default function ExerciseListPage() {
                 type="button"
                 onClick={() => toggleCategory(c)}
                 className={[
-                  'h-9 rounded-full px-3 text-sm font-medium',
-                  active
-                    ? 'bg-black text-white'
-                    : 'bg-gray-100 text-gray-700',
-                ].join(' ')}
+                  "h-9 rounded-full px-3 text-sm font-medium",
+                  active ? "bg-black text-white" : "bg-gray-100 text-gray-700",
+                ].join(" ")}
               >
                 {c}
               </button>
@@ -140,13 +148,15 @@ export default function ExerciseListPage() {
         {filtered === null ? (
           <p className="p-4 text-sm text-gray-400">로딩 중...</p>
         ) : filtered.length === 0 ? (
-          <p className="p-4 text-sm text-gray-400">조건에 맞는 종목이 없어요.</p>
+          <p className="p-4 text-sm text-gray-400">
+            조건에 맞는 종목이 없어요.
+          </p>
         ) : (
           <ul className="grid grid-cols-2 gap-2">
             {filtered.map(({ exercise, primaryMuscle }) => {
               const isAdding = adding === exercise.id;
               return (
-                <li key={exercise.id}>
+                <li key={exercise.id} className="relative">
                   <button
                     type="button"
                     onClick={() => handleSelect(exercise.id)}
@@ -158,10 +168,20 @@ export default function ExerciseListPage() {
                     </span>
                     <span className="mt-2 text-xs text-gray-500">
                       {isAdding
-                        ? '추가 중...'
-                        : `${primaryMuscle?.name_ko ?? '—'} · ${EQUIPMENT_LABEL[exercise.default_equipment]}`}
+                        ? "추가 중..."
+                        : `${primaryMuscle?.name_ko ?? "—"} · ${EQUIPMENT_LABEL[exercise.default_equipment]}`}
                     </span>
                   </button>
+                  {exercise.is_custom && (
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/exercises/${exercise.id}/edit`)}
+                      aria-label={`${exercise.name} 수정`}
+                      className="absolute right-1 top-1 z-10 flex h-8 w-8 items-center justify-center rounded-md text-gray-400 active:bg-gray-100 active:text-black"
+                    >
+                      ✎
+                    </button>
+                  )}
                 </li>
               );
             })}

@@ -180,7 +180,7 @@ export default function RoutineEditPage() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white active:bg-sky-700 disabled:opacity-50"
         >
           {saving ? '저장 중...' : '저장'}
         </button>

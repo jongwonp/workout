@@ -70,7 +70,7 @@ export default function RoutineListPage() {
         <button
           type="button"
           onClick={() => navigate('/routines/new')}
-          className="h-9 rounded-lg bg-black px-3 text-xs font-medium text-white"
+          className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-medium text-white active:bg-emerald-700"
         >
           + 새 루틴
         </button>
@@ -93,7 +93,7 @@ export default function RoutineListPage() {
             </p>
             <Link
               to="/routines/new"
-              className="mt-4 inline-flex h-11 items-center rounded-lg bg-black px-4 text-sm font-medium text-white"
+              className="mt-4 inline-flex h-11 items-center rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white active:bg-emerald-700"
             >
               + 새 루틴 만들기
             </Link>

@@ -277,7 +277,7 @@ export default function SettingsPage() {
           type="button"
           onClick={handleExport}
           disabled={busy !== null}
-          className="h-11 w-full rounded-lg border border-gray-300 text-sm font-medium text-black active:bg-gray-50 disabled:opacity-50"
+          className="h-11 w-full rounded-lg bg-sky-600 text-sm font-medium text-white active:bg-sky-700 disabled:opacity-50"
         >
           {busy === 'export' ? '백업 중...' : '전체 데이터 백업 (JSON 다운로드)'}
         </button>
