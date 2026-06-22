@@ -8,6 +8,8 @@ import {
   updateSet,
   type SetMutablePatch,
 } from "../db/repositories/sets";
+import { useUserStore } from "../store/userStore";
+import { kgToDisplayNumber, type WeightUnit } from "../utils/unit";
 import type { Exercise, SessionExercise, WorkoutSet } from "../types";
 
 interface Props {
@@ -15,16 +17,47 @@ interface Props {
   exercise: Exercise;
   /** 맨몸 운동 세트 생성 시 body_weight_kg_snapshot으로 들어갈 값 */
   userBodyWeightKg: number;
+  /** v4.7: 완료(접힘) 상태 */
+  isDone: boolean;
+  /** 완료 종목을 사용자가 다시 펼쳐 봤는지 */
+  expanded: boolean;
+  /** 완료 토글 */
+  onToggleDone: () => void;
+  /** 접힘 요약 ↔ 펼침 토글 */
+  onToggleExpand: () => void;
   /** ✕ 클릭 시 호출. confirm은 Block 내부에서 처리. */
   onRemove: (sessionExerciseId: string) => void;
+}
+
+/** 접힘 요약 문구: 대표 세트(최대 무게) × 횟수 · N세트 */
+function buildSummary(sets: WorkoutSet[], unit: WeightUnit): string {
+  if (sets.length === 0) return "기록 없음";
+  const working = sets.filter((s) => !s.is_warmup);
+  const base = working.length > 0 ? working : sets;
+  let top = base[0];
+  for (const s of base) {
+    if ((s.weight_kg ?? -1) > (top.weight_kg ?? -1)) top = s;
+  }
+  const head =
+    top.weight_kg !== null
+      ? `${kgToDisplayNumber(top.weight_kg, unit)}${unit}×${top.reps}`
+      : `${top.reps}회`;
+  return `${head} · ${base.length}세트`;
 }
 
 export default function SessionExerciseBlock({
   sessionExercise,
   exercise,
   userBodyWeightKg,
+  isDone,
+  expanded,
+  onToggleDone,
+  onToggleExpand,
   onRemove,
 }: Props) {
+  const unit: WeightUnit = useUserStore(
+    (s) => s.user?.unit_preference ?? "kg",
+  );
   const [sets, setSets] = useState<WorkoutSet[] | null>(null);
   const [adding, setAdding] = useState(false);
 
@@ -108,10 +141,35 @@ export default function SessionExerciseBlock({
     onRemove(sessionExercise.id);
   };
 
+  // 완료 + 펼치지 않음 → 접힘 요약(흐리게). 행 전체 탭으로 펼침.
+  if (isDone && !expanded) {
+    return (
+      <button
+        type="button"
+        onClick={onToggleExpand}
+        className="w-full rounded-xl border border-gray-200 bg-white p-3 text-left opacity-60 active:opacity-90"
+        aria-label={`${exercise.name} 펼치기`}
+      >
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-semibold text-black">
+            <span className="text-emerald-600">✓</span> {exercise.name}
+          </span>
+          <span className="text-xs text-gray-400">펼치기 ▾</span>
+        </div>
+        <p className="mt-1 text-xs text-gray-500">
+          {sets === null ? "..." : buildSummary(sets, unit)}
+        </p>
+      </button>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="flex items-start justify-between">
-        <h2 className="text-base font-semibold text-black">{exercise.name}</h2>
+        <h2 className="text-base font-semibold text-black">
+          {isDone && <span className="text-emerald-600">✓ </span>}
+          {exercise.name}
+        </h2>
         <button
           type="button"
           onClick={handleRemoveClick}
@@ -165,6 +223,36 @@ export default function SessionExerciseBlock({
         >
           ⟲ 이전 세트와 동일
         </button>
+      </div>
+
+      {/* 완료 영역 — '+ 세트 추가'(초록 채움)와 구분되도록 초록 테두리 + 구분선 */}
+      <div className="mt-3 border-t border-gray-100 pt-3">
+        {!isDone ? (
+          <button
+            type="button"
+            onClick={onToggleDone}
+            className="h-11 w-full rounded-lg border border-emerald-600 text-sm font-semibold text-emerald-700 active:bg-emerald-50"
+          >
+            ✓ 이 종목 완료
+          </button>
+        ) : (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={onToggleExpand}
+              className="h-11 flex-1 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 active:bg-gray-50"
+            >
+              ▴ 접기
+            </button>
+            <button
+              type="button"
+              onClick={onToggleDone}
+              className="h-11 rounded-lg px-3 text-sm font-medium text-gray-500 active:text-gray-800"
+            >
+              완료 해제
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

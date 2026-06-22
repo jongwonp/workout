@@ -96,6 +96,8 @@ export interface SessionExercise {
   variation_id: string | null;
   /** 세션 내 종목 순서 (0부터) */
   order: number;
+  /** v4.7: 세션 중 '완료' 표시. true면 기본 접힘+흐리게. 기존 데이터는 undefined→false로 취급. */
+  is_done: boolean;
 }
 
 /**

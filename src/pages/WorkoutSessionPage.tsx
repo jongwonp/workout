@@ -14,6 +14,7 @@ import {
   getSession,
   getSessionExercisesWithDetails,
   removeExerciseFromSession,
+  setSessionExerciseDone,
   updateSessionCondition,
   type SessionExerciseWithDetails,
 } from '../db/repositories/sessions';
@@ -41,6 +42,8 @@ export default function WorkoutSessionPage() {
   const [exercises, setExercises] = useState<SessionExerciseWithDetails[]>([]);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const [conditionPrompted, setConditionPrompted] = useState(false);
+  /** 완료(접힘) 종목 중 사용자가 다시 펼쳐 본 것 — 화면 임시 상태 (완료 자체는 DB 저장) */
+  const [doneExpandedIds, setDoneExpandedIds] = useState<Set<string>>(new Set());
 
   const isEditMode = EDIT_PATH_RE.test(location.pathname);
 
@@ -70,6 +73,45 @@ export default function WorkoutSessionPage() {
     if (!sessionId) return;
     sessionStorage.setItem(`condition_prompted:${sessionId}`, '1');
     setConditionPrompted(true);
+  };
+
+  const handleToggleDone = async (sessionExerciseId: string) => {
+    const target = exercises.find(
+      (e) => e.sessionExercise.id === sessionExerciseId
+    );
+    if (!target) return;
+    const next = !target.sessionExercise.is_done;
+    try {
+      await setSessionExerciseDone(sessionExerciseId, next);
+      setExercises((prev) =>
+        prev.map((e) =>
+          e.sessionExercise.id === sessionExerciseId
+            ? {
+                ...e,
+                sessionExercise: { ...e.sessionExercise, is_done: next },
+              }
+            : e
+        )
+      );
+      // 완료↔해제 전환 시 임시 펼침 상태는 초기화 (완료면 접힘이 기본)
+      setDoneExpandedIds((prev) => {
+        if (!prev.has(sessionExerciseId)) return prev;
+        const n = new Set(prev);
+        n.delete(sessionExerciseId);
+        return n;
+      });
+    } catch (err) {
+      console.error('완료 토글 실패', err);
+    }
+  };
+
+  const handleToggleExpand = (sessionExerciseId: string) => {
+    setDoneExpandedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(sessionExerciseId)) n.delete(sessionExerciseId);
+      else n.add(sessionExerciseId);
+      return n;
+    });
   };
 
   const handleRemoveExercise = async (sessionExerciseId: string) => {
@@ -213,6 +255,10 @@ export default function WorkoutSessionPage() {
               sessionExercise={sessionExercise}
               exercise={exercise}
               userBodyWeightKg={user?.body_weight_kg ?? 70}
+              isDone={sessionExercise.is_done}
+              expanded={doneExpandedIds.has(sessionExercise.id)}
+              onToggleDone={() => handleToggleDone(sessionExercise.id)}
+              onToggleExpand={() => handleToggleExpand(sessionExercise.id)}
               onRemove={handleRemoveExercise}
             />
           ))

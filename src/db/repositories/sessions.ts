@@ -82,6 +82,7 @@ export async function createSessionFromRoutine(
           exercise_id: re.exercise_id,
           variation_id: re.variation_id,
           order: re.order,
+          is_done: false,
         }));
         await db.sessionExercises.bulkAdd(sessExs);
       }
@@ -321,7 +322,16 @@ export async function addExerciseToSession(
     exercise_id: exerciseId,
     variation_id: defaultVariation?.id ?? null,
     order: existing,
+    is_done: false,
   };
   await db.sessionExercises.add(sessEx);
   return sessEx;
+}
+
+/** v4.7: 세션 종목 '완료' 토글 저장. */
+export async function setSessionExerciseDone(
+  sessionExerciseId: string,
+  isDone: boolean
+): Promise<void> {
+  await db.sessionExercises.update(sessionExerciseId, { is_done: isDone });
 }
